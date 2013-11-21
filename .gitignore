@@ -25,3 +25,7 @@ sample/obj/DynTextureAtlasSampleConfig.xml
 sample/lib/boy_texture.fla
 
 sample/lib/boy_texture.swf
+/sample/bin
+/.idea
+
+/*.iml
