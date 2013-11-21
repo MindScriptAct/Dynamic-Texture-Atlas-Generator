@@ -110,147 +110,10 @@ public class DynamicAtlas {
 	static protected var _margin:Number;
 	static protected var _preserveColor:Boolean;
 
-	// Will not be used - Only using one static method
-	public function DynamicAtlas() {
 
-	}
-
-	// Private methods
-
-	static protected function appendIntToString(num:int, numOfPlaces:int):String {
-		var numString:String = num.toString();
-		var outString:String = "";
-		for (var i:int = 0; i < numOfPlaces - numString.length; i++) {
-			outString += "0";
-		}
-		return outString + numString;
-	}
-
-	static protected function layoutChildren():void {
-		var xPos:Number = 0;
-		var yPos:Number = 0;
-		var maxY:Number = 0;
-		var len:int = _items.length;
-
-		var itm:TextureItem;
-
-		for (var i:uint = 0; i < len; i++) {
-			itm = _items[i];
-			if ((xPos + itm.width) > DEFAULT_CANVAS_WIDTH) {
-				xPos = 0;
-				yPos += maxY;
-				maxY = 0;
-			}
-			if (itm.height + 1 > maxY) {
-				maxY = itm.height + 1;
-			}
-			itm.x = xPos;
-			itm.y = yPos;
-			xPos += itm.width + 1;
-		}
-	}
-
-	/**
-	 * isEmbedded
-	 *
-	 * @param    fontFamily:Boolean - The name of the Font
-	 * @return Boolean - True if the font is an embedded one
-	 */
-	static protected function isEmbedded(fontFamily:String):Boolean {
-		var embeddedFonts:Vector.<Font> = Vector.<Font>(Font.enumerateFonts());
-
-		for (var i:int = embeddedFonts.length - 1; i > -1 && embeddedFonts[i].fontName != fontFamily; i--) {
-		}
-
-		return (i > -1);
-
-	}
-
-	static protected function getRealBounds(clip:DisplayObject):Rectangle {
-		var bounds:Rectangle = clip.getBounds(clip.parent);
-		bounds.x = Math.floor(bounds.x);
-		bounds.y = Math.floor(bounds.y);
-		bounds.height = Math.ceil(bounds.height);
-		bounds.width = Math.ceil(bounds.width);
-
-		var realBounds:Rectangle = new Rectangle(0, 0, bounds.width + _margin * 2, bounds.height + _margin * 2);
-
-		// Checking filters in case we need to expand the outer bounds
-		if (clip.filters.length > 0) {
-			// filters
-			var j:int = 0;
-			//var clipFilters:Array = clipChild.filters.concat();
-			var clipFilters:Array = clip.filters;
-			var clipFiltersLength:int = clipFilters.length;
-			var tmpBData:BitmapData;
-			var filterRect:Rectangle;
-
-			tmpBData = new BitmapData(realBounds.width, realBounds.height, false);
-			filterRect = tmpBData.generateFilterRect(tmpBData.rect, clipFilters[j]);
-			realBounds = realBounds.union(filterRect);
-			tmpBData.dispose();
-
-			while (++j < clipFiltersLength) {
-				tmpBData = new BitmapData(filterRect.width, filterRect.height, true, 0);
-				filterRect = tmpBData.generateFilterRect(tmpBData.rect, clipFilters[j]);
-				realBounds = realBounds.union(filterRect);
-				tmpBData.dispose();
-			}
-		}
-
-		realBounds.offset(bounds.x, bounds.y);
-		realBounds.width = Math.max(realBounds.width, 1);
-		realBounds.height = Math.max(realBounds.height, 1);
-
-		tmpBData = null;
-		return realBounds;
-	}
-
-	/**
-	 * drawItem - This will actually rasterize the display object passed as a parameter
-	 * @param    clip
-	 * @param    name
-	 * @param    baseName
-	 * @param    clipColorTransform
-	 * @param    frameBounds
-	 * @return TextureItem
-	 */
-	static protected function drawItem(clip:DisplayObject, name:String = "", baseName:String = "", clipColorTransform:ColorTransform = null, frameBounds:Rectangle = null):TextureItem {
-		var realBounds:Rectangle = getRealBounds(clip);
-
-		_bData = new BitmapData(realBounds.width, realBounds.height, true, 0);
-		_mat = clip.transform.matrix;
-		_mat.translate(-realBounds.x + _margin, -realBounds.y + _margin);
-
-		_bData.draw(clip, _mat, _preserveColor ? clipColorTransform : null);
-
-		var label:String = "";
-		if (clip is MovieClip) {
-			if (clip["currentLabel"] != _currentLab && clip["currentLabel"] != null) {
-				_currentLab = clip["currentLabel"];
-				label = _currentLab;
-			}
-		}
-
-		if (frameBounds) {
-			realBounds.x = frameBounds.x - realBounds.x;
-			realBounds.y = frameBounds.y - realBounds.y;
-			realBounds.width = frameBounds.width;
-			realBounds.height = frameBounds.height;
-		}
-
-		var item:TextureItem = new TextureItem(_bData, name, label, realBounds.x, realBounds.y, realBounds.width, realBounds.height);
-
-		_items.push(item);
-		_canvas.addChild(item);
-
-
-		_bData = null;
-
-		return item;
-	}
-
+	//---------------------
 	// Public methods
+	//---------------------
 
 	/**
 	 * This method takes a vector of DisplayObject class and converts it into a Texture Atlas.
@@ -272,6 +135,7 @@ public class DynamicAtlas {
 		return fromMovieClipContainer(container, scaleFactor, margin, preserveColor, checkBounds);
 	}
 
+	// TODO : what this is for ???
 	/** Retrieves all textures for a class. Returns <code>null</code> if it is not found.
 	 * This method can be used if TextureAtlass doesn't support classes.
 	 */
@@ -372,7 +236,7 @@ public class DynamicAtlas {
 			while (++m <= selectedTotalFrames) {
 				if (selected is MovieClip)
 					MovieClip(selected).gotoAndStop(m);
-				drawItem(selected, selected.name + "_" + appendIntToString(m - 1, 5), selected.name, selectedColorTransform, frameBounds);
+				drawItem(selected, selected.name + "_" + (m - 1), selected.name, selectedColorTransform, frameBounds);
 			}
 		}
 
@@ -551,6 +415,142 @@ public class DynamicAtlas {
 		xml = null;
 		_canvas = null;
 		_currentLab = null;
+	}
+
+
+	// --------------------
+	// Internals
+	// --------------------
+
+	// layouts all children.
+	// TODO : remove dependency from private variable. (needed things should be injected.)
+	// TODO : add options for layout strategy.
+	// TODO : add option to use power of 2 image size.
+	// TODO : add option to square picture.
+	static protected function layoutChildren():void {
+		var xPos:Number = 0;
+		var yPos:Number = 0;
+		var maxY:Number = 0;
+		var len:int = _items.length;
+
+		var itm:TextureItem;
+
+		for (var i:uint = 0; i < len; i++) {
+			itm = _items[i];
+			if ((xPos + itm.width) > DEFAULT_CANVAS_WIDTH) {
+				xPos = 0;
+				yPos += maxY;
+				maxY = 0;
+			}
+			if (itm.height + 1 > maxY) {
+				maxY = itm.height + 1;
+			}
+			itm.x = xPos;
+			itm.y = yPos;
+			xPos += itm.width + 1;
+		}
+	}
+
+	/**
+	 * isEmbedded
+	 *
+	 * @param    fontFamily:Boolean - The name of the Font
+	 * @return Boolean - True if the font is an embedded one
+	 */
+	static protected function isEmbedded(fontFamily:String):Boolean {
+		var embeddedFonts:Vector.<Font> = Vector.<Font>(Font.enumerateFonts());
+
+		for (var i:int = embeddedFonts.length - 1; i > -1 && embeddedFonts[i].fontName != fontFamily; i--) {
+		}
+
+		return (i > -1);
+
+	}
+
+	// get rectangle object is taking. (with filters in mind.)
+	// TODO : optimize.
+	static protected function getRealBounds(clip:DisplayObject):Rectangle {
+		var bounds:Rectangle = clip.getBounds(clip.parent);
+		bounds.x = Math.floor(bounds.x);
+		bounds.y = Math.floor(bounds.y);
+		bounds.height = Math.ceil(bounds.height);
+		bounds.width = Math.ceil(bounds.width);
+
+		var realBounds:Rectangle = new Rectangle(0, 0, bounds.width + _margin * 2, bounds.height + _margin * 2);
+
+		// Checking filters in case we need to expand the outer bounds
+		if (clip.filters.length > 0) {
+			// filters
+			var j:int = 0;
+			//var clipFilters:Array = clipChild.filters.concat();
+			var clipFilters:Array = clip.filters;
+			var clipFiltersLength:int = clipFilters.length;
+			var tmpBData:BitmapData;
+			var filterRect:Rectangle;
+
+			tmpBData = new BitmapData(realBounds.width, realBounds.height, false);
+			filterRect = tmpBData.generateFilterRect(tmpBData.rect, clipFilters[j]);
+			realBounds = realBounds.union(filterRect);
+			tmpBData.dispose();
+
+			while (++j < clipFiltersLength) {
+				tmpBData = new BitmapData(filterRect.width, filterRect.height, true, 0);
+				filterRect = tmpBData.generateFilterRect(tmpBData.rect, clipFilters[j]);
+				realBounds = realBounds.union(filterRect);
+				tmpBData.dispose();
+			}
+		}
+
+		realBounds.offset(bounds.x, bounds.y);
+		realBounds.width = Math.max(realBounds.width, 1);
+		realBounds.height = Math.max(realBounds.height, 1);
+
+		tmpBData = null;
+		return realBounds;
+	}
+
+	/**
+	 * drawItem - This will actually rasterize the display object passed as a parameter
+	 * @param    clip
+	 * @param    name
+	 * @param    baseName
+	 * @param    clipColorTransform
+	 * @param    frameBounds
+	 * @return TextureItem
+	 */
+	static protected function drawItem(clip:DisplayObject, name:String = "", baseName:String = "", clipColorTransform:ColorTransform = null, frameBounds:Rectangle = null):TextureItem {
+		var realBounds:Rectangle = getRealBounds(clip);
+
+		_bData = new BitmapData(realBounds.width, realBounds.height, true, 0);
+		_mat = clip.transform.matrix;
+		_mat.translate(-realBounds.x + _margin, -realBounds.y + _margin);
+
+		_bData.draw(clip, _mat, _preserveColor ? clipColorTransform : null);
+
+		var label:String = "";
+		if (clip is MovieClip) {
+			if (clip["currentLabel"] != _currentLab && clip["currentLabel"] != null) {
+				_currentLab = clip["currentLabel"];
+				label = _currentLab;
+			}
+		}
+
+		if (frameBounds) {
+			realBounds.x = frameBounds.x - realBounds.x;
+			realBounds.y = frameBounds.y - realBounds.y;
+			realBounds.width = frameBounds.width;
+			realBounds.height = frameBounds.height;
+		}
+
+		var item:TextureItem = new TextureItem(_bData, name, label, realBounds.x, realBounds.y, realBounds.width, realBounds.height);
+
+		_items.push(item);
+		_canvas.addChild(item);
+
+
+		_bData = null;
+
+		return item;
 	}
 
 }
